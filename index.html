@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Briefing LP — Central de Prompts</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root {
+  --ink: #0f0f0f;
+  --muted: #6b6b6b;
+  --border: #e2e2e2;
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --green: #2d6a4f;
+  --green-light: #f0f7f4;
+  --green-border: rgba(45,106,79,0.25);
+  --serif: 'DM Serif Display', serif;
+  --sans: 'DM Sans', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--sans); background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+/* ── SITE HEADER ── */
+.site-header {
+  background: var(--ink);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.site-logo {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+.site-logo em { color: #6ee7b7; font-style: italic; }
+.site-credit { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 0.05em; }
+
+/* ── NAV TABS ── */
+.nav-tabs {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  padding: 0 32px;
+  gap: 0;
+}
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+  height: 50px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  user-select: none;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+.nav-tab:hover { color: var(--ink); }
+.nav-tab.active { color: var(--green); border-bottom-color: var(--green); }
+.nav-tab .tab-num {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--border);
+  color: var(--muted);
+  border-radius: 4px;
+  padding: 2px 6px;
+  letter-spacing: 0.05em;
+}
+.nav-tab.active .tab-num { background: var(--green-light); color: var(--green); }
+.nav-tab.done .tab-num { background: #dcfce7; color: #16a34a; }
+
+/* ── PAGE CONTENT ── */
+.page-content { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* ── TAB PANELS ── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── PANEL HEADER ── */
+.panel-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--ink);
+  gap: 20px;
+}
+.panel-title h2 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.panel-title h2 em { font-style: italic; color: var(--green); }
+.panel-title p { margin-top: 6px; font-size: 13px; color: var(--muted); font-weight: 300; }
+.panel-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: 6px;
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  cursor: pointer; letter-spacing: 0.02em;
+  transition: all 0.2s; border: none; white-space: nowrap;
+}
+.btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.btn-dark { background: var(--ink); color: #fff; }
+.btn-dark:hover { background: #2a2a2a; transform: translateY(-1px); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { background: #235c42; transform: translateY(-1px); }
+.btn-outline { background: transparent; color: var(--green); border: 1px solid var(--green-border); }
+.btn-outline:hover { background: var(--green-light); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); font-size: 12px; padding: 8px 14px; }
+.btn-ghost:hover { border-color: #c00; color: #c00; }
+.btn.done { background: var(--green-light); color: var(--green); border-color: var(--green); }
+
+/* ── META ROW ── */
+.meta-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+
+/* ── BLOCKS ── */
+.block { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+.block-header { display: flex; align-items: center; gap: 14px; padding: 14px 20px; background: var(--ink); color: #fff; }
+.block-num { font-family: var(--serif); font-size: 12px; font-style: italic; color: rgba(255,255,255,0.4); min-width: 24px; }
+.block-title { font-size: 12px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+.block-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+
+/* ── FIELDS ── */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field-row { display: grid; gap: 14px; }
+.field-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.field-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+label { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+input[type=text], textarea, select {
+  font-family: var(--sans); font-size: 13.5px; font-weight: 400; color: var(--ink);
+  background: #fafafa; border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px 12px; width: 100%; outline: none;
+  transition: border-color 0.2s, background 0.2s; resize: vertical;
+}
+input[type=text]:focus, textarea:focus, select:focus { border-color: var(--green); background: var(--green-light); }
+input[type=text]::placeholder, textarea::placeholder { color: #c0c0c0; font-weight: 300; }
+textarea { min-height: 80px; line-height: 1.6; }
+select {
+  cursor: pointer; -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+}
+.hint { font-size: 11px; color: var(--muted); font-weight: 300; font-style: italic; margin-top: -2px; }
+.field-divider { height: 1px; background: var(--border); margin: 2px 0; }
+.field-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--green); background: var(--green-light);
+  border: 1px solid var(--green-border); border-radius: 4px;
+  padding: 3px 8px; margin-bottom: 2px; width: fit-content;
+}
+
+/* ── UPLOAD AREA ── */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafafa;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.upload-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  width: 100%; height: 100%;
+  border: none; background: none; padding: 0;
+}
+.upload-icon { font-size: 36px; margin-bottom: 12px; }
+.upload-title { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--muted); font-weight: 300; }
+.upload-status {
+  margin-top: 14px; padding: 12px 16px;
+  background: var(--green-light); border: 1px solid var(--green-border);
+  border-radius: 8px; font-size: 13px; color: var(--green);
+  font-weight: 500; display: none; align-items: center; gap: 8px;
+}
+.upload-status.visible { display: flex; }
+.upload-status svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ── PROMPT OUTPUT ── */
+.prompt-section { margin-top: 24px; display: none; }
+.prompt-section.visible { display: block; }
+.prompt-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.prompt-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green); }
+.prompt-label-sub { font-size: 11px; color: var(--muted); font-weight: 300; margin-top: 2px; }
+#prompt-output-reuniao, #prompt-output-final {
+  width: 100%; min-height: 240px;
+  background: var(--ink); color: #e8e8e8;
+  border: 1px solid #2a2a2a; border-radius: 10px;
+  padding: 20px; font-family: 'Courier New', monospace;
+  font-size: 12px; line-height: 1.75; resize: vertical; outline: none;
+}
+
+/* ── FOOTER ── */
+.panel-footer {
+  margin-top: 32px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.footer-nav { display: flex; gap: 10px; }
+
+/* ── PROGRESS DOTS ── */
+.progress-dots { display: flex; gap: 8px; align-items: center; }
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border); transition: all 0.3s;
+}
+.dot.active { background: var(--green); transform: scale(1.3); }
+.dot.done { background: #86efac; }
+
+/* ── UPLOAD GRID ── */
+.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+
+@media (max-width: 600px) {
+  .meta-row { grid-template-columns: 1fr; }
+  .field-row.cols-2, .field-row.cols-3 { grid-template-columns: 1fr; }
+  .upload-grid { grid-template-columns: 1fr; }
+  .nav-tab span.tab-label { display: none; }
+  .panel-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- SITE HEADER -->
+<header class="site-header">
+  <div class="site-logo">Briefing <em>LP</em></div>
+  <div class="site-credit">By Paulo Jorge</div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav-tabs">
+  <div class="nav-tab active" onclick="trocarAba(0)" id="tab-0">
+    <span class="tab-num" id="num-0">01</span>
+    <span class="tab-label">Ficha de Reunião</span>
+  </div>
+  <div class="nav-tab" onclick="trocarAba(1)" id="tab-1">
+    <span class="tab-num" id="num-1">02</span>
+    <span class="tab-label">Documentos</span>
+  </div>
+  <div class="nav-tab" onclick="trocarAba(2)" id="tab-2">
+    <span class="tab-num" id="num-2">03</span>
+    <span class="tab-label">Gerar Prompt</span>
+  </div>
+</nav>
+
+<div class="page-content">
+
+<!-- ══════════════════════════════════════════════
+     ABA 1 — FICHA DE REUNIÃO
+══════════════════════════════════════════════ -->
+<div class="tab-panel active" id="panel-0">
+  <div class="panel-header">
+    <div class="panel-title">
+      <h2>Ficha de <em>Reunião</em></h2>
+      <p>Preencher durante o kick-off com o cliente</p>
+    </div>
+    <div class="panel-actions">
+      <button class="btn btn-outline" onclick="gerarPromptReuniao()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Gerar Prompt
+      </button>
+      <button class="btn btn-dark" onclick="gerarPDF()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- META -->
+  <div class="meta-row">
+    <div class="field"><label>Cliente</label><input type="text" id="meta_cliente" placeholder="Nome / empresa"></div>
+    <div class="field"><label>Data da reunião</label><input type="text" id="meta_data" placeholder="dd/mm/aaaa"></div>
+    <div class="field"><label>Responsável</label><input type="text" id="meta_resp" placeholder="Seu nome"></div>
+  </div>
+
+  <!-- BLOCO 1 -->
+  <div class="block">
+    <div class="block-header"><span class="block-num">01</span><span class="block-title">Público</span></div>
+    <div class="block-body">
+      <div class="field">
+        <label>Nível de consciência do público</label>
+        <select id="p_consciencia">
+          <option value="">Selecione...</option>
+          <option>Inconsciente do problema</option>
+          <option>Consciente do problema</option>
+          <option>Consciente da solução</option>
+          <option>Consciente do produto</option>
+          <option>Mais consciente (pronto para comprar)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Como o cliente pesquisa ou chega ao negócio hoje?</label>
+        <input type="text" id="p_jornada" placeholder="Ex: Google, indicação, Instagram Ads, panfleto...">
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCO 2 -->
+  <div class="block">
+    <div class="block-header"><span class="block-num">02</span><span class="block-title">Serviço ou Produto</span></div>
+    <div class="block-body">
+      <div class="field">
+        <label>Existe urgência ou escassez real?</label>
+        <input type="text" id="s_urgencia" placeholder="Ex: Apenas 10 vagas por mês, oferta válida até sexta-feira...">
+        <span class="hint">Se não existir, deixar em branco.</span>
+      </div>
+      <div class="field"><label>Preço ou faixa de valor</label><input type="text" id="s_preco" placeholder="Ex: R$ 297, a partir de R$ 150, sob consulta"></div>
+    </div>
+  </div>
+
+  <!-- BLOCO 3 -->
+  <div class="block">
+    <div class="block-header"><span class="block-num">03</span><span class="block-title">Diferenciais Competitivos</span></div>
+    <div class="block-body">
+      <div class="field">
+        <label>Por que escolher este negócio e não a concorrência?</label>
+        <textarea id="d_diferenciais" placeholder="Ex: Único na cidade com o equipamento X, atendimento em até 24h, método exclusivo..."></textarea>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Credenciais / autoridade</label><input type="text" id="d_autoridade" placeholder="Ex: 12 anos de mercado, 3.000 clientes"></div>
+        <div class="field"><label>Prêmios, mídia ou certificações</label><input type="text" id="d_premios" placeholder="Ex: Finalista Prêmio ABF 2023"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCO 4 -->
+  <div class="block">
+    <div class="block-header"><span class="block-num">04</span><span class="block-title">Provas Sociais</span></div>
+    <div class="block-body">
+      <div class="field"><div class="field-tag">Coletar 2 a 3 depoimentos</div><label>Depoimento 1</label><textarea id="ps_dep1" placeholder='"Texto do depoimento." — Nome, cidade'></textarea></div>
+      <div class="field"><label>Depoimento 2</label><textarea id="ps_dep2" placeholder='"Texto do depoimento." — Nome, cidade'></textarea></div>
+      <div class="field"><label>Depoimento 3 (opcional)</label><textarea id="ps_dep3" placeholder='"Texto do depoimento." — Nome, cidade'></textarea></div>
+      <div class="field-divider"></div>
+      <div class="field"><label>Cases ou resultados mensuráveis</label><textarea id="ps_cases" placeholder="Ex: Cliente A saiu de 0 para R$30k/mês em 90 dias..."></textarea></div>
+    </div>
+  </div>
+
+  <!-- BLOCO 5 -->
+  <div class="block">
+    <div class="block-header"><span class="block-num">05</span><span class="block-title">Objeções</span></div>
+    <div class="block-body">
+      <div class="field"><label>Principais objeções que bloqueiam a conversão</label><textarea id="ob_objecoes" placeholder="Ex: É caro demais, Não tenho tempo, Já tentei de tudo..."></textarea></div>
+      <div class="field">
+        <div class="field-tag">⚡ Prioridade</div>
+        <label>Objeção número 1 — a que faz o cliente não fechar na hora</label>
+        <input type="text" id="ob_principal" placeholder="Ex: Acha caro antes de entender o valor">
+      </div>
+      <div class="field"><label>Como o negócio responde a cada objeção</label><textarea id="ob_respostas" placeholder="Ex: Parcelamento em 12x sem juros, horários noturnos e aos sábados..."></textarea></div>
+      <div class="field"><label>Garantia / risco zero para o cliente</label><input type="text" id="ob_garantia" placeholder="Ex: Garantia incondicional de 30 dias ou dinheiro de volta"></div>
+    </div>
+  </div>
+
+  <!-- BLOCO 6 -->
+  <div class="block">
+    <div class="block-header"><span class="block-num">06</span><span class="block-title">Tráfego</span></div>
+    <div class="block-body">
+      <div class="field-row cols-2">
+        <div class="field">
+          <label>Temperatura do tráfego</label>
+          <select id="t_temp">
+            <option value="">Selecione...</option>
+            <option>Frio — não conhece o negócio</option>
+            <option>Morno — já teve contato ou foi indicado</option>
+            <option>Quente — já pesquisou, está decidindo</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Origem do tráfego</label>
+          <select id="t_origem">
+            <option value="">Selecione...</option>
+            <option>Google Ads (pesquisa)</option>
+            <option>Meta Ads (Facebook/Instagram)</option>
+            <option>Tráfego orgânico (SEO)</option>
+            <option>E-mail marketing</option>
+            <option>WhatsApp / indicações</option>
+            <option>Múltiplas fontes</option>
+            <option>Ainda não definido</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Promessa do anúncio — o que está no criativo que leva para a LP</label><input type="text" id="t_promessa" placeholder="Ex: Avaliação gratuita sem compromisso | Perca 8kg em 60 dias"></div>
+      <div class="field-row cols-2">
+        <div class="field">
+          <label>Dispositivo predominante</label>
+          <select id="t_device">
+            <option value="">Selecione...</option>
+            <option>Principalmente mobile</option>
+            <option>Principalmente desktop</option>
+            <option>Misto (50/50)</option>
+          </select>
+        </div>
+        <div class="field"><label>Integrações necessárias</label><input type="text" id="t_integ" placeholder="Ex: Pixel Meta, GTM, RD Station"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCO 7 -->
+  <div class="block">
+    <div class="block-header"><span class="block-num">07</span><span class="block-title">Concorrentes e Restrições</span></div>
+    <div class="block-body">
+      <div class="field"><label>Concorrentes diretos</label><textarea id="obs_concorrentes" placeholder="Ex: Clínica X (clinicax.com.br), Studio Y — o que eles fazem bem/mal?"></textarea></div>
+      <div class="field"><label>Restrições de linguagem ou imagem</label><input type="text" id="obs_restricoes" placeholder="Ex: Não usar a palavra grátis, evitar antes/depois por regulamentação..."></div>
+      <div class="field"><label>Outras informações relevantes</label><textarea id="obs_outras" placeholder="Ex: LP antiga que convertia bem, vídeo de depoimento disponível, prazo urgente..."></textarea></div>
+    </div>
+  </div>
+
+  <!-- PROMPT OUTPUT -->
+  <div class="prompt-section" id="promptSecReuniao">
+    <div class="prompt-header">
+      <div><div class="prompt-label">Prompt da reunião gerado</div><div class="prompt-label-sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Cole na Aba 03 junto com os documentos para gerar o prompt final</div></div>
+      <button class="btn btn-outline" id="btnCopiarReuniao" onclick="copiar('prompt-output-reuniao','btnCopiarReuniao')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copiar
+      </button>
+    </div>
+    <textarea id="prompt-output-reuniao" readonly></textarea>
+  </div>
+
+  <div class="panel-footer">
+    <button class="btn btn-ghost" onclick="limparAba1()">Limpar tudo</button>
+    <button class="btn btn-green" onclick="trocarAba(1)">
+      Próximo: Documentos
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     ABA 2 — DOCUMENTOS
+══════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-1">
+  <div class="panel-header">
+    <div class="panel-title">
+      <h2><em>Documentos</em></h2>
+      <p>Faça upload dos arquivos para enriquecer o prompt final</p>
+    </div>
+  </div>
+
+  <div class="upload-grid">
+
+    <!-- PDF FORMULÁRIO DO CLIENTE -->
+    <div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;">Formulário do Cliente</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:300;">PDF preenchido pelo cliente antes da reunião</div>
+      </div>
+      <div class="upload-zone" id="zone-form" ondragover="dragOver(event,'zone-form')" ondragleave="dragLeave('zone-form')" ondrop="dropFile(event,'zone-form','status-form','file-form','text-form')">
+        <input type="file" accept=".pdf" onchange="fileSelected(this,'status-form','file-form','text-form')">
+        <div class="upload-icon">📋</div>
+        <div class="upload-title">Clique ou arraste o PDF</div>
+        <div class="upload-sub">Briefing preenchido pelo cliente</div>
+      </div>
+      <div class="upload-status" id="status-form">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="text-form">Arquivo carregado</span>
+      </div>
+    </div>
+
+    <!-- PDF FICHA DE REUNIÃO -->
+    <div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;">PDF da Reunião</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:300;">PDF exportado da Aba 01 após a reunião</div>
+      </div>
+      <div class="upload-zone" id="zone-reun" ondragover="dragOver(event,'zone-reun')" ondragleave="dragLeave('zone-reun')" ondrop="dropFile(event,'zone-reun','status-reun','file-reun','text-reun')">
+        <input type="file" accept=".pdf" onchange="fileSelected(this,'status-reun','file-reun','text-reun')">
+        <div class="upload-icon">📝</div>
+        <div class="upload-title">Clique ou arraste o PDF</div>
+        <div class="upload-sub">Ficha exportada da reunião</div>
+      </div>
+      <div class="upload-status" id="status-reun">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="text-reun">Arquivo carregado</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- OBSERVAÇÕES FINAIS -->
+  <div class="block">
+    <div class="block-header"><span class="block-num">OBS</span><span class="block-title">Observações Finais</span></div>
+    <div class="block-body">
+      <div class="field">
+        <label>Informações adicionais, contexto extra ou ajustes de última hora</label>
+        <textarea id="obs_finais" style="min-height:120px;" placeholder="Ex: Cliente pediu urgência na entrega, tem vídeo de depoimento disponível, LP anterior convertia bem no mobile, preferência por tom mais descontraído..."></textarea>
+      </div>
+      <div class="field">
+        <label>Estrutura de LP escolhida para este projeto</label>
+        <select id="obs_estrutura">
+          <option value="">Selecione...</option>
+          <option>AIDA — Atenção, Interesse, Desejo, Ação (leads frios, qualquer nicho)</option>
+          <option>PAS — Problema, Agitação, Solução (público consciente da dor)</option>
+          <option>PASTOR — Problema, Amplificação, História, Transformação, Oferta, Resposta (alto ticket)</option>
+          <option>4Ps — Promessa, Prova, Proposta, Push (público aquecido, lançamentos)</option>
+          <option>BAB — Before, After, Bridge (transformação clara e mensurável)</option>
+          <option>STAR-STORY-SOLUTION — narrativa com personagem (serviços premium)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <button class="btn btn-ghost" onclick="trocarAba(0)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Voltar
+    </button>
+    <button class="btn btn-green" onclick="trocarAba(2)">
+      Próximo: Gerar Prompt
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     ABA 3 — GERAR PROMPTS
+══════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-2">
+  <div class="panel-header">
+    <div class="panel-title">
+      <h2>Gerar <em>Prompts</em></h2>
+      <p>Dois prompts separados — primeiro a copy, depois a página</p>
+    </div>
+  </div>
+
+  <!-- INSTRUÇÃO -->
+  <div class="block" style="border-color:var(--green-border);background:var(--green-light);margin-bottom:28px;">
+    <div class="block-body" style="padding:16px 20px;">
+      <div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:8px;">Fluxo de uso</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;font-size:13px;color:#2a5c42;font-weight:300;line-height:1.6;">
+          <span style="background:var(--green);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;">1</span>
+          Gere o <strong>Prompt 01 — Copy</strong> e envie para a IA junto com os PDFs da Aba 02. Aguarde a copy completa.
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;font-size:13px;color:#2a5c42;font-weight:300;line-height:1.6;">
+          <span style="background:var(--green);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
+          Revise e aprove a copy com o cliente.
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;font-size:13px;color:#2a5c42;font-weight:300;line-height:1.6;">
+          <span style="background:var(--green);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
+          Cole a copy aprovada no campo do <strong>Prompt 02 — Página</strong> e gere o HTML.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="block" style="margin-bottom:28px;">
+    <div class="block-header"><span class="block-num">✓</span><span class="block-title">Checklist antes de gerar</span></div>
+    <div class="block-body">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;color:var(--ink);">
+          <input type="checkbox" id="chk1" style="width:16px;height:16px;accent-color:var(--green);border:none;background:none;padding:0;"> Ficha de reunião preenchida (Aba 01)
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;color:var(--ink);">
+          <input type="checkbox" id="chk2" style="width:16px;height:16px;accent-color:var(--green);border:none;background:none;padding:0;"> PDFs carregados na Aba 02 (se disponíveis)
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;color:var(--ink);">
+          <input type="checkbox" id="chk3" style="width:16px;height:16px;accent-color:var(--green);border:none;background:none;padding:0;"> Estrutura de LP selecionada (Aba 02)
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;color:var(--ink);">
+          <input type="checkbox" id="chk4" style="width:16px;height:16px;accent-color:var(--green);border:none;background:none;padding:0;"> Observações finais adicionadas (Aba 02)
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROMPT 01 — COPY ── -->
+  <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;">
+    <div style="background:var(--ink);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px;">Etapa 1</div>
+        <div style="font-size:14px;font-weight:600;color:#fff;">Prompt 01 — Copy</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;font-weight:300;">Gera apenas o texto da LP. Sem código, sem layout.</div>
+      </div>
+      <button class="btn btn-green" onclick="gerarPromptCopy()" style="flex-shrink:0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Gerar
+      </button>
+    </div>
+    <div style="padding:20px;background:var(--card);display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:11px;color:var(--muted);font-weight:300;">Cole no Claude com os PDFs da Aba 02 anexados</div>
+        <button class="btn btn-outline" id="btnCopiarCopy" onclick="copiar('prompt-copy','btnCopiarCopy')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copiar
+        </button>
+      </div>
+      <textarea id="prompt-copy" readonly style="width:100%;min-height:200px;background:var(--ink);color:#e8e8e8;border:1px solid #2a2a2a;border-radius:8px;padding:16px;font-family:'Courier New',monospace;font-size:12px;line-height:1.75;resize:vertical;outline:none;" placeholder="Clique em Gerar para ver o prompt aqui..."></textarea>
+    </div>
+  </div>
+
+  <!-- ── PROMPT 02 — PÁGINA ── -->
+  <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;">
+    <div style="background:#1a3a2a;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px;">Etapa 2 — após copy aprovada</div>
+        <div style="font-size:14px;font-weight:600;color:#fff;">Prompt 02 — Página HTML</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;font-weight:300;">Transforma a copy aprovada em HTML/CSS responsivo.</div>
+      </div>
+      <button class="btn btn-green" onclick="gerarPromptPagina()" style="flex-shrink:0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Gerar
+      </button>
+    </div>
+    <div style="padding:20px;background:var(--card);display:flex;flex-direction:column;gap:16px;">
+
+      <!-- CAMPO COPY APROVADA -->
+      <div class="field">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div class="field-tag" style="margin-bottom:0;">Cole aqui a copy aprovada</div>
+        </div>
+        <textarea id="copy_aprovada" style="min-height:140px;" placeholder="Cole aqui o texto da copy gerada no Prompt 01, após aprovação do cliente..."></textarea>
+        <span class="hint">O prompt só incluirá a copy se este campo estiver preenchido.</span>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:11px;color:var(--muted);font-weight:300;">Cole no Claude em uma nova conversa</div>
+        <button class="btn btn-outline" id="btnCopiarPagina" onclick="copiar('prompt-pagina','btnCopiarPagina')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copiar
+        </button>
+      </div>
+      <textarea id="prompt-pagina" readonly style="width:100%;min-height:200px;background:var(--ink);color:#e8e8e8;border:1px solid #2a2a2a;border-radius:8px;padding:16px;font-family:'Courier New',monospace;font-size:12px;line-height:1.75;resize:vertical;outline:none;" placeholder="Clique em Gerar para ver o prompt aqui..."></textarea>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <button class="btn btn-ghost" onclick="trocarAba(1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Voltar
+    </button>
+    <button class="btn btn-ghost" onclick="limparTudo()">Limpar tudo</button>
+  </div>
+</div>
+
+</div><!-- /page-content -->
+
+<script>
+// ── NAVEGAÇÃO ──
+function trocarAba(idx) {
+  document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', i === idx));
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', i === idx));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── COLETAR DADOS ──
+function dados() {
+  const g = id => document.getElementById(id) ? document.getElementById(id).value : '';
+  return {
+    meta_cliente: g('meta_cliente'), meta_data: g('meta_data'), meta_resp: g('meta_resp'),
+    p_consciencia: g('p_consciencia'), p_jornada: g('p_jornada'),
+    s_urgencia: g('s_urgencia'), s_preco: g('s_preco'),
+    d_diferenciais: g('d_diferenciais'), d_autoridade: g('d_autoridade'), d_premios: g('d_premios'),
+    ps_dep1: g('ps_dep1'), ps_dep2: g('ps_dep2'), ps_dep3: g('ps_dep3'), ps_cases: g('ps_cases'),
+    ob_objecoes: g('ob_objecoes'), ob_principal: g('ob_principal'), ob_respostas: g('ob_respostas'), ob_garantia: g('ob_garantia'),
+    t_temp: g('t_temp'), t_origem: g('t_origem'), t_promessa: g('t_promessa'), t_device: g('t_device'), t_integ: g('t_integ'),
+    obs_concorrentes: g('obs_concorrentes'), obs_restricoes: g('obs_restricoes'), obs_outras: g('obs_outras'),
+    obs_finais: g('obs_finais'), obs_estrutura: g('obs_estrutura'),
+  };
+}
+
+const L = (label, val) => val ? `• ${label}: ${val}\n` : '';
+
+// ── PROMPT REUNIÃO (ABA 1) ──
+function gerarPromptReuniao() {
+  const d = dados();
+  const txt = `# BRIEFING DE REUNIÃO — DADOS COMPLEMENTARES
+Cliente: ${d.meta_cliente||'—'} | Data: ${d.meta_data||'—'} | Responsável: ${d.meta_resp||'—'}
+
+## PÚBLICO
+${L('Nível de consciência',d.p_consciencia)}${L('Como chega ao negócio',d.p_jornada)}
+## SERVIÇO / PRODUTO
+${L('Urgência ou escassez real',d.s_urgencia)}${L('Preço ou faixa de valor',d.s_preco)}
+## DIFERENCIAIS COMPETITIVOS
+${L('Por que escolher este negócio',d.d_diferenciais)}${L('Credenciais / autoridade',d.d_autoridade)}${L('Prêmios, mídia ou certificações',d.d_premios)}
+## PROVAS SOCIAIS
+${L('Depoimento 1',d.ps_dep1)}${L('Depoimento 2',d.ps_dep2)}${L('Depoimento 3',d.ps_dep3)}${L('Cases ou resultados',d.ps_cases)}
+## OBJEÇÕES
+${L('Principais objeções',d.ob_objecoes)}${L('Objeção número 1',d.ob_principal)}${L('Como o negócio responde',d.ob_respostas)}${L('Garantia',d.ob_garantia)}
+## TRÁFEGO
+${L('Temperatura',d.t_temp)}${L('Origem',d.t_origem)}${L('Promessa do anúncio',d.t_promessa)}${L('Dispositivo',d.t_device)}${L('Integrações',d.t_integ)}
+## CONCORRENTES E RESTRIÇÕES
+${L('Concorrentes diretos',d.obs_concorrentes)}${L('Restrições',d.obs_restricoes)}${L('Outras informações',d.obs_outras)}`.trim();
+
+  document.getElementById('prompt-output-reuniao').value = txt;
+  document.getElementById('promptSecReuniao').classList.add('visible');
+  setTimeout(() => document.getElementById('promptSecReuniao').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+// ── PROMPT 01 — COPY ──
+function gerarPromptCopy() {
+  const d = dados();
+  const estrutura = d.obs_estrutura ? d.obs_estrutura.split(' — ')[0] : 'A ser definida';
+  const secao = (titulo, conteudo) => conteudo.trim() ? `\n## ${titulo}\n${conteudo}` : '';
+  const briefing =
+    secao('PÚBLICO', L('Nível de consciência',d.p_consciencia) + L('Como chega ao negócio',d.p_jornada)) +
+    secao('SERVIÇO / PRODUTO', L('Urgência / escassez real',d.s_urgencia) + L('Preço ou faixa de valor',d.s_preco)) +
+    secao('DIFERENCIAIS COMPETITIVOS', L('Por que escolher',d.d_diferenciais) + L('Credenciais / autoridade',d.d_autoridade) + L('Prêmios e certificações',d.d_premios)) +
+    secao('PROVAS SOCIAIS', L('Depoimento 1',d.ps_dep1) + L('Depoimento 2',d.ps_dep2) + L('Depoimento 3',d.ps_dep3) + L('Cases',d.ps_cases)) +
+    secao('OBJEÇÕES', L('Principais objeções',d.ob_objecoes) + L('Objeção número 1',d.ob_principal) + L('Como responde',d.ob_respostas) + L('Garantia',d.ob_garantia)) +
+    secao('TRÁFEGO', L('Temperatura',d.t_temp) + L('Origem',d.t_origem) + L('Promessa do anúncio',d.t_promessa) + L('Dispositivo',d.t_device) + L('Integrações',d.t_integ)) +
+    secao('CONCORRENTES E RESTRIÇÕES', L('Concorrentes',d.obs_concorrentes) + L('Restrições',d.obs_restricoes) + L('Outras informações',d.obs_outras)) +
+    (d.obs_finais ? secao('OBSERVAÇÕES FINAIS', d.obs_finais) : '');
+
+  const prompt = `# PROMPT 01 — CRIAÇÃO DA COPY DA LANDING PAGE
+Cliente: ${d.meta_cliente||'—'} | Estrutura: ${estrutura}
+
+---
+
+## PAPEL
+Você é um copywriter especialista em Landing Pages de alta conversão. Sua única função neste prompt é escrever o TEXTO COMPLETO da LP. Não crie HTML, não defina layout, não mencione código. Apenas copy.
+
+Se PDFs foram anexados junto a este prompt, use todas as informações neles contidas para enriquecer o briefing abaixo.
+
+---
+
+## BRIEFING DO CLIENTE
+${briefing}
+
+---
+
+## ESTRUTURA A SEGUIR: ${estrutura}
+
+Escreva o texto completo de cada bloco, seguindo esta ordem:
+
+1. Para cada bloco, informe o nome do bloco como título.
+2. Escreva o texto exato que aparecerá na página: headline, subheadline, parágrafos, bullets, CTA.
+3. Linguagem centrada no cliente — use "você", nunca "nós oferecemos".
+4. Parágrafos com no máximo 3 linhas. Use bullets para listas de benefícios.
+5. Aplique ao menos 3 gatilhos mentais (escassez, urgência, prova social, autoridade, especificidade). Indique entre colchetes qual gatilho foi usado em cada trecho.
+6. Use os dados reais do briefing — nomes, números, prazos, resultados. Nunca invente dados.
+7. Escreva como se a copy fosse ao ar hoje. Sem clichês como "a melhor solução do mercado".
+
+Ao final, liste:
+- Gatilhos mentais aplicados e onde foram usados
+- Sugestões de teste A/B para os headlines
+- Dados que estavam faltando no briefing e limitaram a copy`.trim();
+
+  document.getElementById('prompt-copy').value = prompt;
+  setTimeout(() => document.getElementById('prompt-copy').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+// ── PROMPT 02 — PÁGINA ──
+function gerarPromptPagina() {
+  const d = dados();
+  const estrutura = d.obs_estrutura ? d.obs_estrutura.split(' — ')[0] : 'A ser definida';
+  const copyAprovada = document.getElementById('copy_aprovada').value.trim();
+
+  const secaoCopy = copyAprovada
+    ? `\n## COPY APROVADA\nUse exatamente os textos abaixo. Não altere nenhuma linha sem indicar.\n\n${copyAprovada}\n`
+    : `\n## COPY APROVADA\n[COLE AQUI A COPY APROVADA ANTES DE ENVIAR ESTE PROMPT]\n`;
+
+  const prompt = `# PROMPT 02 — CONSTRUÇÃO DA PÁGINA HTML
+Cliente: ${d.meta_cliente||'—'} | Estrutura: ${estrutura}
+
+---
+
+## CONTEXTO
+Este prompt deve ser usado APÓS a copy estar escrita e aprovada pelo cliente.
+Sua função é transformar a copy fornecida abaixo em uma Landing Page funcional em HTML/CSS.
+
+---
+
+## PAPEL
+Você é um desenvolvedor front-end especialista em Landing Pages de alta conversão. Entregue uma página HTML completa, semântica, responsiva e otimizada para conversão.
+${secaoCopy}
+---
+
+## IDENTIDADE VISUAL
+${L('Dispositivo predominante', d.t_device)}${L('Integrações necessárias', d.t_integ)}${d.obs_finais ? L('Observações do cliente', d.obs_finais) : ''}
+(Se o cliente enviou referências visuais, cores ou fontes nos PDFs anexados, utilize essas informações.)
+
+---
+
+## INSTRUÇÕES TÉCNICAS
+
+1. Entregue um único arquivo HTML com CSS interno e JS mínimo necessário.
+2. Mobile-first — desenvolva primeiro para telas menores. Breakpoint principal: 768px.
+3. Sem frameworks externos. CSS puro + JS vanilla.
+4. H1 único, H2 por seção, body com no máximo 16px.
+5. Botão CTA deve aparecer ao menos 3 vezes: topo, meio e rodapé.
+6. Atributos alt em imagens, labels em formulários, contraste adequado.
+7. Onde houver imagem, use um div com background-color + texto descritivo: [FOTO: descrição].
+8. Formulário de captura: campos mínimos (nome + WhatsApp ou e-mail). Atributo action vazio.
+9. Inclua comentários no HTML indicando o nome de cada bloco da estrutura ${estrutura}.
+10. Ao final do código, liste em comentário HTML:
+    - Integrações pendentes (pixel, CRM, analytics)
+    - Imagens que precisam ser inseridas
+    - Testes recomendados antes do go-live`.trim();
+
+  document.getElementById('prompt-pagina').value = prompt;
+  setTimeout(() => document.getElementById('prompt-pagina').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+// ── COPIAR ──
+function copiar(taId, btnId) {
+  const ta = document.getElementById(taId);
+  ta.select();
+  navigator.clipboard.writeText(ta.value).catch(() => document.execCommand('copy'));
+  const btn = document.getElementById(btnId);
+  const orig = btn.innerHTML;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiado!`;
+  btn.classList.add('done');
+  setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('done'); }, 2200);
+}
+
+// ── UPLOAD ──
+function fileSelected(input, statusId, fileId, textId) {
+  if (input.files && input.files[0]) {
+    document.getElementById(statusId).classList.add('visible');
+    document.getElementById(textId).textContent = input.files[0].name;
+  }
+}
+function dragOver(e, zoneId) { e.preventDefault(); document.getElementById(zoneId).classList.add('drag-over'); }
+function dragLeave(zoneId) { document.getElementById(zoneId).classList.remove('drag-over'); }
+function dropFile(e, zoneId, statusId, fileId, textId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') {
+    document.getElementById(statusId).classList.add('visible');
+    document.getElementById(textId).textContent = file.name;
+  }
+}
+
+// ── PDF ──
+function gerarPDF() {
+  const d = dados();
+  const linha = (l,v) => v ? `<div style="margin-bottom:10px;"><div style="font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6b6b6b;margin-bottom:3px;">${l}</div><div style="font-size:12.5px;line-height:1.6;white-space:pre-wrap;">${v}</div></div>` : '';
+  const bloco = (n,t,c) => c.trim() ? `<div style="margin-bottom:16px;border:1px solid #e2e2e2;border-radius:8px;overflow:hidden;page-break-inside:avoid;"><div style="background:#0f0f0f;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;"><span style="font-family:Georgia,serif;font-style:italic;font-size:11px;color:rgba(255,255,255,.4);">${n}</span><span style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;">${t}</span></div><div style="padding:14px 16px;">${c}</div></div>` : '';
+
+  const html = `<div style="font-family:Arial,sans-serif;color:#0f0f0f;padding:28px;max-width:794px;">
+    <div style="border-bottom:2px solid #0f0f0f;padding-bottom:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end;">
+      <div><div style="font-family:Georgia,serif;font-size:28px;font-weight:400;letter-spacing:-.02em;">Ficha de <em style="color:#2d6a4f;">Reunião</em></div><div style="font-size:11px;color:#6b6b6b;margin-top:5px;">Briefing Landing Page</div></div>
+      <div style="font-size:10px;color:#6b6b6b;">By Paulo Jorge</div>
+    </div>
+    <div style="display:flex;gap:16px;margin-bottom:24px;">
+      <div style="flex:1;"><div style="font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6b6b6b;margin-bottom:3px;">Cliente</div><div style="font-size:12.5px;border-bottom:1px solid #e2e2e2;padding-bottom:3px;">${d.meta_cliente||'—'}</div></div>
+      <div style="flex:1;"><div style="font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6b6b6b;margin-bottom:3px;">Data</div><div style="font-size:12.5px;border-bottom:1px solid #e2e2e2;padding-bottom:3px;">${d.meta_data||'—'}</div></div>
+      <div style="flex:1;"><div style="font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6b6b6b;margin-bottom:3px;">Responsável</div><div style="font-size:12.5px;border-bottom:1px solid #e2e2e2;padding-bottom:3px;">${d.meta_resp||'—'}</div></div>
+    </div>
+    ${bloco('01','Público', linha('Nível de consciência',d.p_consciencia)+linha('Como chega ao negócio',d.p_jornada))}
+    ${bloco('02','Serviço ou Produto', linha('Urgência / escassez real',d.s_urgencia)+linha('Preço ou faixa de valor',d.s_preco))}
+    ${bloco('03','Diferenciais Competitivos', linha('Por que escolher',d.d_diferenciais)+linha('Credenciais / autoridade',d.d_autoridade)+linha('Prêmios e certificações',d.d_premios))}
+    ${bloco('04','Provas Sociais', linha('Depoimento 1',d.ps_dep1)+linha('Depoimento 2',d.ps_dep2)+linha('Depoimento 3',d.ps_dep3)+linha('Cases',d.ps_cases))}
+    ${bloco('05','Objeções', linha('Principais objeções',d.ob_objecoes)+linha('Objeção número 1',d.ob_principal)+linha('Como responde',d.ob_respostas)+linha('Garantia',d.ob_garantia))}
+    ${bloco('06','Tráfego', linha('Temperatura',d.t_temp)+linha('Origem',d.t_origem)+linha('Promessa do anúncio',d.t_promessa)+linha('Dispositivo',d.t_device)+linha('Integrações',d.t_integ))}
+    ${bloco('07','Concorrentes e Restrições', linha('Concorrentes',d.obs_concorrentes)+linha('Restrições',d.obs_restricoes)+linha('Outras informações',d.obs_outras))}
+  </div>`;
+
+  const nome = d.meta_cliente ? d.meta_cliente.replace(/\s+/g,'_') : 'Cliente';
+  html2pdf().set({ margin:[10,10,10,10], filename:`Briefing_Reuniao_${nome}.pdf`, image:{type:'jpeg',quality:.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} }).from(html).save();
+}
+
+// ── LIMPAR ──
+function limparAba1() {
+  if (!confirm('Limpar todos os campos da ficha de reunião?')) return;
+  document.querySelectorAll('#panel-0 input[type=text], #panel-0 textarea, #panel-0 select').forEach(el => el.value = '');
+  document.getElementById('promptSecReuniao').classList.remove('visible');
+}
+function limparTudo() {
+  if (!confirm('Limpar todos os dados de todas as abas?')) return;
+  document.querySelectorAll('input[type=text], textarea, select').forEach(el => el.value = '');
+  document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
+  document.getElementById('promptSecReuniao').classList.remove('visible');
+  document.querySelectorAll('.upload-status').forEach(el => el.classList.remove('visible'));
+}
+</script>
+</body>
+</html>
